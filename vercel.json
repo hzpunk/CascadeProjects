@@ -4,9 +4,5 @@
     "api/index.js": {
       "maxDuration": 10
     }
-  },
-  "env": {
-    "BOT_TOKEN": "8227070653:AAHKMFczEuffwn6Imhmgmo84z4yS9wdPcxQ",
-    "ADMIN_IDS":"8138548567"
   }
 }
