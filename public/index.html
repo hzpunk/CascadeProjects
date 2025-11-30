@@ -85,6 +85,7 @@
             button.textContent = '⏳ Отправка...';
 
             try {
+                console.log('Sending broadcast request...');
                 const response = await fetch('/api/broadcast', {
                     method: 'POST',
                     headers: {
@@ -96,16 +97,20 @@
                     })
                 });
 
+                console.log('Response status:', response.status);
                 const result = await response.json();
+                console.log('Response result:', result);
                 
                 if (response.ok) {
                     alert(`✅ Рассылка отправлена! Успешно: ${result.successful}, Ошибок: ${result.failed}`);
                     updateLogs(`Рассылка отправлена: ${result.successful} пользователей`);
+                    loadStats(); // Обновляем статистику
                 } else {
                     alert(`❌ Ошибка: ${result.error}`);
                     updateLogs(`Ошибка рассылки: ${result.error}`);
                 }
             } catch (error) {
+                console.error('Broadcast error:', error);
                 alert(`❌ Ошибка соединения: ${error.message}`);
                 updateLogs(`Ошибка соединения: ${error.message}`);
             } finally {
