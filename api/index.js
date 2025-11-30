@@ -1,7 +1,5 @@
 const path = require('path');
 
-require('dotenv').config();
-
 const TelegramBot = require('node-telegram-bot-api');
 
 const BOT_TOKEN = process.env.BOT_TOKEN;
@@ -89,7 +87,7 @@ bot.onText(/\/admin_notify/, async (msg) => {
   console.log('============================');
   
   // Simple admin check - replace with your actual admin chat ID
-  const ADMIN_CHAT_ID = process.env.ADMIN_CHAT_ID || chatId;
+  const ADMIN_CHAT_ID = process.env.ADMIN_IDS || chatId;
   
   if (chatId.toString() !== ADMIN_CHAT_ID.toString()) {
     console.log(`ACCESS DENIED: User ${userId} (@${username}) tried to use admin command`);
