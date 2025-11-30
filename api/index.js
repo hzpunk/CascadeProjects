@@ -13,7 +13,7 @@ if (!BOT_TOKEN) {
 
 // Use polling for local development, webhook for production
 const bot = WEBHOOK_URL 
-  ? new TelegramBot(BOT_TOKEN)
+  ? new TelegramBot(BOT_TOKEN, { webHook: true })
   : new TelegramBot(BOT_TOKEN, { polling: true });
 
 if (WEBHOOK_URL) {
@@ -141,7 +141,13 @@ bot.onText(/\/admin_notify/, async (msg) => {
 
 module.exports = async (req, res) => {
   try {
-    await bot.handleUpdate(req.body);
+    // For webhook mode, process the update directly
+    if (WEBHOOK_URL) {
+      bot.processUpdate(req.body);
+    } else {
+      // For polling mode, this shouldn't be called
+      throw new Error('Webhook handler called in polling mode');
+    }
     res.status(200).send('OK');
   } catch (error) {
     console.error('Error handling update:', error);
