@@ -136,18 +136,32 @@ bot.onText(/\/admin_notify/, async (msg) => {
 // Webhook handler - simplified
 module.exports = async (req, res) => {
   try {
-    console.log('=== WEBHOOK REQUEST ===');
+    console.log('=== WEBHOOK REQUEST START ===');
     console.log(`Timestamp: ${new Date().toISOString()}`);
     console.log(`Method: ${req.method}`);
     console.log(`URL: ${req.url}`);
-    console.log(`Headers:`, JSON.stringify(req.headers, null, 2));
-    console.log(`Body:`, JSON.stringify(req.body, null, 2));
+    console.log(`Content-Type: ${req.headers['content-type']}`);
+    console.log(`Content-Length: ${req.headers['content-length']}`);
+    
+    // Log body based on content type
+    if (req.headers['content-type'] === 'application/json') {
+      console.log(`Body JSON:`, JSON.stringify(req.body, null, 2));
+    } else {
+      console.log(`Body Raw:`, req.body);
+      console.log(`Body String:`, JSON.stringify(req.body));
+    }
     console.log('==================');
+    
+    // Check if body exists
+    if (!req.body || Object.keys(req.body).length === 0) {
+      console.log('WARNING: Empty request body');
+      return res.status(200).send('OK');
+    }
     
     // Always process webhook update
     console.log('Processing webhook update...');
-    await bot.processUpdate(req.body);
-    console.log('Webhook update processed successfully');
+    const result = await bot.processUpdate(req.body);
+    console.log('Webhook update processed successfully, result:', result);
     
     console.log('Webhook request handled successfully');
     res.status(200).send('OK');
@@ -160,6 +174,10 @@ module.exports = async (req, res) => {
     console.error(`Stack:`, error.stack);
     console.error('========================');
     
-    res.status(500).send('Error');
+    res.status(500).json({ 
+      error: error.message,
+      stack: error.stack,
+      timestamp: new Date().toISOString()
+    });
   }
 };
