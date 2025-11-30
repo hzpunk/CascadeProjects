@@ -8,8 +8,9 @@
     "dev": "node api/index.js"
   },
   "dependencies": {
-    "node-telegram-bot-api": "^0.64.0",
-    "axios": "^1.6.2"
+    "axios": "^1.6.2",
+    "dotenv": "^17.2.3",
+    "node-telegram-bot-api": "^0.64.0"
   },
   "devDependencies": {
     "@vercel/node": "^3.0.0"
