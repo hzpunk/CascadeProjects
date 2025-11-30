@@ -11,41 +11,6 @@ if (!BOT_TOKEN) {
   process.exit(1);
 }
 
-// Helper function to send message with retry (faster)
-async function sendMessageWithRetry(userId, message, imagePath = null, maxRetries = 2) {
-  for (let attempt = 1; attempt <= maxRetries; attempt++) {
-    try {
-      if (imagePath) {
-        await bot.sendPhoto(userId, imagePath, {
-          caption: message,
-          parse_mode: 'HTML'
-        });
-        console.log(`✅ Photo sent to user ${userId}`);
-      } else {
-        await bot.sendMessage(userId, message, { 
-          parse_mode: 'HTML',
-          disable_web_page_preview: true
-        });
-        console.log(`✅ Message sent to user ${userId}`);
-      }
-      return true;
-    } catch (error) {
-      console.error(`❌ Attempt ${attempt} failed for user ${userId}:`, error.message);
-      
-      if (attempt === maxRetries) {
-        console.error(`❌ All attempts failed for user ${userId}`);
-        return false;
-      }
-      
-      // Faster retry: 500ms, 1000ms
-      const delay = attempt * 500;
-      console.log(`⏳ Retrying in ${delay}ms...`);
-      await new Promise(resolve => setTimeout(resolve, delay));
-    }
-  }
-  return false;
-}
-
 module.exports = async (req, res) => {
   try {
     console.log('=== BROADCAST REQUEST ===');
@@ -73,26 +38,29 @@ module.exports = async (req, res) => {
     
     console.log(`Starting web broadcast to ${users.size} users...`);
     
-    // Send all messages concurrently for faster response
-    const promises = Array.from(users).map(async (userId) => {
-      const success = await sendMessageWithRetry(
-        userId, 
-        message, 
-        withImage ? imagePath : null
-      );
-      
-      if (success) {
+    for (const userId of users) {
+      try {
+        console.log(`Sending to user ${userId}...`);
+        
+        if (withImage) {
+          await bot.sendPhoto(userId, imagePath, {
+            caption: message,
+            parse_mode: 'HTML'
+          });
+          console.log(`✅ Photo sent to user ${userId}`);
+        } else {
+          await bot.sendMessage(userId, message, { 
+            parse_mode: 'HTML',
+            disable_web_page_preview: true
+          });
+          console.log(`✅ Message sent to user ${userId}`);
+        }
         successCount++;
-      } else {
+      } catch (error) {
+        console.error(`❌ Failed to send to user ${userId}:`, error.message);
         failedUsers.push(userId);
       }
-      
-      // Minimal delay to avoid rate limiting
-      await new Promise(resolve => setTimeout(resolve, 50));
-      return success;
-    });
-    
-    await Promise.all(promises);
+    }
     
     console.log('=== BROADCAST RESULTS ===');
     console.log(`Total users: ${users.size}`);
