@@ -153,12 +153,14 @@ module.exports = async (req, res) => {
     console.log(`Body:`, JSON.stringify(req.body, null, 2));
     console.log('==================');
     
-    // Handle different endpoints
-    if (req.method === 'POST' && req.url === '/api/broadcast') {
+    // Handle different endpoints based on URL path
+    const url = req.url || '';
+    
+    if (req.method === 'POST' && url.includes('/broadcast')) {
       return handleBroadcast(req, res);
     }
     
-    if (req.method === 'GET' && req.url === '/api/stats') {
+    if (req.method === 'GET' && url.includes('/stats')) {
       return handleStats(req, res);
     }
     
