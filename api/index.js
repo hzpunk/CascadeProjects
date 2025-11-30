@@ -148,7 +148,7 @@ bot.onText(/\/admin_notify/, async (msg) => {
   }
 });
 
-// Webhook handler - simplified
+// Webhook handler - optimized for speed
 module.exports = async (req, res) => {
   try {
     console.log('=== WEBHOOK REQUEST START ===');
@@ -173,7 +173,7 @@ module.exports = async (req, res) => {
       return res.status(200).send('OK');
     }
     
-    // Always process webhook update
+    // Always process webhook update immediately
     console.log('Processing webhook update...');
     const result = await bot.processUpdate(req.body);
     console.log('Webhook update processed successfully, result:', result);
