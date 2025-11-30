@@ -1,0 +1,25 @@
+{
+  "name": "hzlab-telegram-bot",
+  "version": "1.0.0",
+  "description": "Telegram bot for Hzlab site launch notifications",
+  "main": "api/index.js",
+  "scripts": {
+    "start": "node api/index.js",
+    "dev": "node api/index.js"
+  },
+  "dependencies": {
+    "node-telegram-bot-api": "^0.64.0",
+    "axios": "^1.6.2"
+  },
+  "devDependencies": {
+    "@vercel/node": "^3.0.0"
+  },
+  "keywords": [
+    "telegram",
+    "bot",
+    "vercel",
+    "serverless"
+  ],
+  "author": "Hzlab",
+  "license": "MIT"
+}

@@ -1,0 +1,12 @@
+{
+  "version": 2,
+  "functions": {
+    "api/index.js": {
+      "maxDuration": 10
+    }
+  },
+  "env": {
+    "BOT_TOKEN": "@bot_token",
+    "WEBHOOK_URL": "@webhook_url"
+  }
+}
