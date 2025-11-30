@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hzlab Bot Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <h1 class="text-4xl font-bold text-center mb-8">🤖 Hzlab Bot Admin</h1>
+        
+        <div class="max-w-md mx-auto space-y-6">
+            <!-- Статус бота -->
+            <div class="bg-gray-800 rounded-lg p-6">
+                <h2 class="text-xl font-semibold mb-4">Статус бота</h2>
+                <div id="botStatus" class="flex items-center">
+                    <div class="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
+                    <span>Бот активен</span>
+                </div>
+            </div>
+
+            <!-- Управление рассылкой -->
+            <div class="bg-gray-800 rounded-lg p-6">
+                <h2 class="text-xl font-semibold mb-4">Управление рассылкой</h2>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Сообщение для рассылки:</label>
+                        <textarea id="broadcastMessage" class="w-full bg-gray-700 rounded-lg p-3 h-24" placeholder="🚀 Hzlab запущен!&#10;🌐 Сайт: https://hzlabik.ru">🚀 Hzlab запущен!
+
+🌐 Сайт теперь доступен: https://hzlabik.ru
+
+Спасибо за ваше терпение и поддержку! 🎉</textarea>
+                    </div>
+                    
+                    <div class="flex items-center space-x-2">
+                        <input type="checkbox" id="sendWithImage" checked class="rounded">
+                        <label for="sendWithImage">Отправить с изображением</label>
+                    </div>
+                    
+                    <button onclick="sendBroadcast()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition">
+                        📢 Отправить рассылку
+                    </button>
+                </div>
+            </div>
+
+            <!-- Статистика -->
+            <div class="bg-gray-800 rounded-lg p-6">
+                <h2 class="text-xl font-semibold mb-4">Статистика</h2>
+                <div class="space-y-2">
+                    <div class="flex justify-between">
+                        <span>Всего пользователей:</span>
+                        <span id="totalUsers" class="font-bold">-</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span>Последняя рассылка:</span>
+                        <span id="lastBroadcast" class="font-bold">-</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Логи -->
+            <div class="bg-gray-800 rounded-lg p-6">
+                <h2 class="text-xl font-semibold mb-4">Последние действия</h2>
+                <div id="logs" class="bg-gray-900 rounded p-3 h-32 overflow-y-auto text-sm font-mono">
+                    <div class="text-gray-400">Ожидание данных...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function sendBroadcast() {
+            const message = document.getElementById('broadcastMessage').value;
+            const withImage = document.getElementById('sendWithImage').checked;
+            
+            if (!message.trim()) {
+                alert('Введите сообщение для рассылки');
+                return;
+            }
+
+            const button = event.target;
+            button.disabled = true;
+            button.textContent = '⏳ Отправка...';
+
+            try {
+                const response = await fetch('/api/broadcast', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        message: message,
+                        withImage: withImage
+                    })
+                });
+
+                const result = await response.json();
+                
+                if (response.ok) {
+                    alert(`✅ Рассылка отправлена! Успешно: ${result.successful}, Ошибок: ${result.failed}`);
+                    updateLogs(`Рассылка отправлена: ${result.successful} пользователей`);
+                } else {
+                    alert(`❌ Ошибка: ${result.error}`);
+                    updateLogs(`Ошибка рассылки: ${result.error}`);
+                }
+            } catch (error) {
+                alert(`❌ Ошибка соединения: ${error.message}`);
+                updateLogs(`Ошибка соединения: ${error.message}`);
+            } finally {
+                button.disabled = false;
+                button.textContent = '📢 Отправить рассылку';
+            }
+        }
+
+        function updateLogs(message) {
+            const logs = document.getElementById('logs');
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.textContent = `[${timestamp}] ${message}`;
+            logEntry.className = 'text-green-400';
+            logs.insertBefore(logEntry, logs.firstChild);
+            
+            // Удаляем старые логи
+            while (logs.children.length > 10) {
+                logs.removeChild(logs.lastChild);
+            }
+        }
+
+        async function loadStats() {
+            try {
+                const response = await fetch('/api/stats');
+                const stats = await response.json();
+                
+                document.getElementById('totalUsers').textContent = stats.totalUsers || '-';
+                document.getElementById('lastBroadcast').textContent = stats.lastBroadcast || '-';
+            } catch (error) {
+                console.error('Ошибка загрузки статистики:', error);
+            }
+        }
+
+        // Загрузка статистики при загрузке страницы
+        loadStats();
+        updateLogs('Панель управления загружена');
+    </script>
+</body>
+</html>

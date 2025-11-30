@@ -73,7 +73,7 @@ bot.onText(/\/start/, (msg) => {
   bot.sendMessage(chatId, '🚀 Добро пожаловать в Hzlab бот!\n\nЯ уведомлю вас о запуске нашего сайта. Оставайтесь на связи!');
 });
 
-// Enhanced admin command to send to all stored users
+// API endpoints for web interface
 bot.onText(/\/admin_notify/, async (msg) => {
   const chatId = msg.chat.id;
   const userId = msg.from.id;
@@ -141,8 +141,18 @@ bot.onText(/\/admin_notify/, async (msg) => {
   }
 });
 
+// Web interface endpoints
 module.exports = async (req, res) => {
   try {
+    // Handle different endpoints
+    if (req.method === 'POST' && req.url === '/api/broadcast') {
+      return handleBroadcast(req, res);
+    }
+    
+    if (req.method === 'GET' && req.url === '/api/stats') {
+      return handleStats(req, res);
+    }
+    
     // For webhook mode, process the update directly
     if (WEBHOOK_URL) {
       bot.processUpdate(req.body);
@@ -156,3 +166,54 @@ module.exports = async (req, res) => {
     res.status(500).send('Error');
   }
 };
+
+async function handleBroadcast(req, res) {
+  try {
+    const { message, withImage } = req.body;
+    const imagePath = path.join(__dirname, '..', 'img', 'hzlab.jpeg');
+    
+    let successCount = 0;
+    let failedUsers = [];
+    
+    console.log(`Web broadcast to ${users.size} users...`);
+    
+    for (const userId of users) {
+      try {
+        if (withImage) {
+          await bot.sendPhoto(userId, imagePath, {
+            caption: message,
+            parse_mode: 'HTML'
+          });
+        } else {
+          await bot.sendMessage(userId, message);
+        }
+        successCount++;
+      } catch (error) {
+        console.error(`Failed to send to user ${userId}:`, error.message);
+        failedUsers.push(userId);
+      }
+    }
+    
+    res.json({
+      success: true,
+      successful: successCount,
+      failed: failedUsers.length,
+      total: users.size
+    });
+    
+  } catch (error) {
+    console.error('Broadcast error:', error);
+    res.status(500).json({ error: error.message });
+  }
+}
+
+async function handleStats(req, res) {
+  try {
+    res.json({
+      totalUsers: users.size,
+      lastBroadcast: new Date().toLocaleString('ru-RU')
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+}
