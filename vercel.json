@@ -7,7 +7,6 @@
   },
   "env": {
     "BOT_TOKEN": "8227070653:AAHKMFczEuffwn6Imhmgmo84z4yS9wdPcxQ",
-    "ADMIN_IDS":"8138548567",
-    "WEBHOOK_URL": "@webhook_url"
+    "ADMIN_IDS":"8138548567"
   }
 }
