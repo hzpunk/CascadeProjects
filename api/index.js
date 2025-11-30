@@ -149,18 +149,21 @@ module.exports = async (req, res) => {
     console.log(`Timestamp: ${new Date().toISOString()}`);
     console.log(`Method: ${req.method}`);
     console.log(`URL: ${req.url}`);
+    console.log(`Pathname: ${req.url?.split('?')[0]}`);
     console.log(`Headers:`, JSON.stringify(req.headers, null, 2));
     console.log(`Body:`, JSON.stringify(req.body, null, 2));
     console.log('==================');
     
     // Handle different endpoints based on URL path
-    const url = req.url || '';
+    const pathname = req.url?.split('?')[0] || '';
     
-    if (req.method === 'POST' && url.includes('/broadcast')) {
+    if (req.method === 'POST' && pathname === '/api/broadcast') {
+      console.log('Handling broadcast request');
       return handleBroadcast(req, res);
     }
     
-    if (req.method === 'GET' && url.includes('/stats')) {
+    if (req.method === 'GET' && pathname === '/api/stats') {
+      console.log('Handling stats request');
       return handleStats(req, res);
     }
     
