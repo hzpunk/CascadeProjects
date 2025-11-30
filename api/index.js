@@ -39,7 +39,10 @@ bot.on('message', async (msg) => {
   
   if (messageText && !messageText.startsWith('/')) {
     try {
-      await bot.sendMessage(chatId, 'Используйте /start для начала или /notify для получения уведомления о запуске.');
+      await bot.sendMessage(chatId, 'Используйте /start для начала или /notify для получения уведомления о запуске.', {
+        parse_mode: 'HTML',
+        disable_web_page_preview: true
+      });
       console.log(`✅ Help message sent to user ${userId}`);
     } catch (error) {
       console.error(`❌ Failed to send help message to user ${userId}:`, error.message);
@@ -66,7 +69,10 @@ bot.onText(/\/start/, async (msg) => {
   users.add(chatId);
   
   try {
-    await bot.sendMessage(chatId, '🚀 Добро пожаловать в Hzlab бот!\n\nЯ уведомлю вас о запуске нашего сайта. Оставайтесь на связи!');
+    await bot.sendMessage(chatId, '🚀 Добро пожаловать в Hzlab бот!\n\nЯ уведомлю вас о запуске нашего сайта. Оставайтесь на связи!', {
+      parse_mode: 'HTML',
+      disable_web_page_preview: true
+    });
     console.log(`✅ Welcome message sent to user ${userId}`);
   } catch (error) {
     console.error(`❌ Failed to send welcome message to user ${userId}:`, error.message);

@@ -11,6 +11,41 @@ if (!BOT_TOKEN) {
   process.exit(1);
 }
 
+// Helper function to send message with retry
+async function sendMessageWithRetry(userId, message, imagePath = null, maxRetries = 3) {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      if (imagePath) {
+        await bot.sendPhoto(userId, imagePath, {
+          caption: message,
+          parse_mode: 'HTML'
+        });
+        console.log(`✅ Photo sent to user ${userId} (attempt ${attempt})`);
+      } else {
+        await bot.sendMessage(userId, message, { 
+          parse_mode: 'HTML',
+          disable_web_page_preview: true
+        });
+        console.log(`✅ Message sent to user ${userId} (attempt ${attempt})`);
+      }
+      return true;
+    } catch (error) {
+      console.error(`❌ Attempt ${attempt} failed for user ${userId}:`, error.message);
+      
+      if (attempt === maxRetries) {
+        console.error(`❌ All ${maxRetries} attempts failed for user ${userId}`);
+        return false;
+      }
+      
+      // Exponential backoff: 1s, 2s, 4s
+      const delay = Math.pow(2, attempt - 1) * 1000;
+      console.log(`⏳ Retrying in ${delay}ms...`);
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
+  }
+  return false;
+}
+
 module.exports = async (req, res) => {
   try {
     console.log('=== BROADCAST REQUEST ===');
@@ -39,28 +74,20 @@ module.exports = async (req, res) => {
     console.log(`Starting web broadcast to ${users.size} users...`);
     
     for (const userId of users) {
-      try {
-        console.log(`Sending to user ${userId}...`);
-        
-        if (withImage) {
-          await bot.sendPhoto(userId, imagePath, {
-            caption: message,
-            parse_mode: 'HTML'
-          });
-          console.log(`✅ Photo sent to user ${userId}`);
-        } else {
-          await bot.sendMessage(userId, message);
-          console.log(`✅ Message sent to user ${userId}`);
-        }
+      const success = await sendMessageWithRetry(
+        userId, 
+        message, 
+        withImage ? imagePath : null
+      );
+      
+      if (success) {
         successCount++;
-      } catch (error) {
-        console.error(`❌ Failed to send to user ${userId}:`, error.message);
-        console.error(`Error details:`, error);
+      } else {
         failedUsers.push(userId);
-        
-        // Add delay to avoid rate limiting
-        await new Promise(resolve => setTimeout(resolve, 100));
       }
+      
+      // Add delay between users to avoid rate limiting
+      await new Promise(resolve => setTimeout(resolve, 200));
     }
     
     console.log('=== BROADCAST RESULTS ===');
