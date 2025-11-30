@@ -16,6 +16,14 @@ if (!BOT_TOKEN) {
 // Always use webhook mode on Vercel
 console.log('Webhook mode:', WEBHOOK_URL);
 
+// For local testing, use polling
+if (!WEBHOOK_URL || WEBHOOK_URL.includes('localhost') || process.env.NODE_ENV !== 'production') {
+  console.log('Starting polling mode for local testing...');
+  bot.startPolling();
+} else {
+  console.log('Webhook mode configured for Vercel');
+}
+
 // Enhanced message logging
 bot.on('message', (msg) => {
   const chatId = msg.chat.id;
