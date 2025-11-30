@@ -2,8 +2,7 @@ const path = require('path');
 
 require('dotenv').config();
 
-const TelegramBot = require('node-telegram-bot-api');
-const { users } = require('./storage');
+const { bot, users } = require('./storage');
 
 const BOT_TOKEN = process.env.BOT_TOKEN;
 
@@ -11,9 +10,6 @@ if (!BOT_TOKEN) {
   console.error('BOT_TOKEN environment variable is required');
   process.exit(1);
 }
-
-// Create bot instance (no polling needed for API endpoints)
-const bot = new TelegramBot(BOT_TOKEN);
 
 module.exports = async (req, res) => {
   try {
