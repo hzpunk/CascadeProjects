@@ -3,6 +3,7 @@ const path = require('path');
 require('dotenv').config();
 
 const TelegramBot = require('node-telegram-bot-api');
+const { users } = require('./storage');
 
 const BOT_TOKEN = process.env.BOT_TOKEN;
 const WEBHOOK_URL = process.env.WEBHOOK_URL || 'https://cascade-projects-red.vercel.app/api';
@@ -17,9 +18,6 @@ if (!BOT_TOKEN) {
 const bot = new TelegramBot(BOT_TOKEN, { webHook: true });
 
 console.log('Webhook mode:', WEBHOOK_URL);
-
-// In-memory user storage (in production, use a database)
-const users = new Set();
 
 // Enhanced message logging
 bot.on('message', (msg) => {

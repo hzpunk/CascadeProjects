@@ -3,6 +3,7 @@ const path = require('path');
 require('dotenv').config();
 
 const TelegramBot = require('node-telegram-bot-api');
+const { users } = require('./storage');
 
 const BOT_TOKEN = process.env.BOT_TOKEN;
 
@@ -14,9 +15,6 @@ if (!BOT_TOKEN) {
 // Create bot instance (no polling needed for API endpoints)
 const bot = new TelegramBot(BOT_TOKEN);
 
-// In-memory user storage (in production, use a database)
-const users = new Set();
-
 module.exports = async (req, res) => {
   try {
     console.log('=== BROADCAST REQUEST ===');
@@ -24,6 +22,7 @@ module.exports = async (req, res) => {
     console.log(`Method: ${req.method}`);
     console.log(`URL: ${req.url}`);
     console.log(`Request body:`, JSON.stringify(req.body, null, 2));
+    console.log(`Total users: ${users.size}`);
     console.log('==================');
     
     if (req.method !== 'POST') {
