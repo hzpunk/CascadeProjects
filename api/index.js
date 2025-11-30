@@ -5,7 +5,7 @@ require('dotenv').config();
 const TelegramBot = require('node-telegram-bot-api');
 
 const BOT_TOKEN = process.env.BOT_TOKEN;
-const WEBHOOK_URL = process.env.WEBHOOK_URL;
+const WEBHOOK_URL = process.env.WEBHOOK_URL || 'https://cascade-projects-red.vercel.app/api';
 
 if (!BOT_TOKEN) {
   console.error('BOT_TOKEN environment variable is required');
@@ -13,17 +13,10 @@ if (!BOT_TOKEN) {
   process.exit(1);
 }
 
-// Use polling for local development, webhook for production
-const bot = WEBHOOK_URL 
-  ? new TelegramBot(BOT_TOKEN, { webHook: true })
-  : new TelegramBot(BOT_TOKEN, { polling: true });
+// Always use webhook mode on Vercel
+const bot = new TelegramBot(BOT_TOKEN, { webHook: true });
 
-if (WEBHOOK_URL) {
-  bot.setWebHook(WEBHOOK_URL);
-  console.log('Webhook mode:', WEBHOOK_URL);
-} else {
-  console.log('Polling mode - bot is ready for local testing');
-}
+console.log('Webhook mode:', WEBHOOK_URL);
 
 // In-memory user storage (in production, use a database)
 const users = new Set();
@@ -149,17 +142,13 @@ module.exports = async (req, res) => {
     console.log(`Timestamp: ${new Date().toISOString()}`);
     console.log(`Method: ${req.method}`);
     console.log(`URL: ${req.url}`);
+    console.log(`Body:`, JSON.stringify(req.body, null, 2));
     console.log('==================');
     
-    // Process Telegram webhook update
-    if (WEBHOOK_URL) {
-      console.log('Processing webhook update...');
-      await bot.processUpdate(req.body);
-      console.log('Webhook update processed successfully');
-    } else {
-      console.log('ERROR: Webhook handler called in polling mode');
-      throw new Error('Webhook handler called in polling mode');
-    }
+    // Always process webhook update
+    console.log('Processing webhook update...');
+    await bot.processUpdate(req.body);
+    console.log('Webhook update processed successfully');
     
     console.log('Webhook request handled successfully');
     res.status(200).send('OK');
