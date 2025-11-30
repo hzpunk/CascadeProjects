@@ -57,6 +57,9 @@ module.exports = async (req, res) => {
         console.error(`❌ Failed to send to user ${userId}:`, error.message);
         console.error(`Error details:`, error);
         failedUsers.push(userId);
+        
+        // Add delay to avoid rate limiting
+        await new Promise(resolve => setTimeout(resolve, 100));
       }
     }
     

@@ -17,7 +17,7 @@ if (!BOT_TOKEN) {
 console.log('Webhook mode:', WEBHOOK_URL);
 
 // Enhanced message logging
-bot.on('message', (msg) => {
+bot.on('message', async (msg) => {
   const chatId = msg.chat.id;
   const userId = msg.from.id;
   const username = msg.from.username || 'No username';
@@ -38,12 +38,17 @@ bot.on('message', (msg) => {
   console.log('==================');
   
   if (messageText && !messageText.startsWith('/')) {
-    bot.sendMessage(chatId, 'Используйте /start для начала или /notify для получения уведомления о запуске.');
+    try {
+      await bot.sendMessage(chatId, 'Используйте /start для начала или /notify для получения уведомления о запуске.');
+      console.log(`✅ Help message sent to user ${userId}`);
+    } catch (error) {
+      console.error(`❌ Failed to send help message to user ${userId}:`, error.message);
+    }
   }
 });
 
 // Enhanced start command with logging
-bot.onText(/\/start/, (msg) => {
+bot.onText(/\/start/, async (msg) => {
   const chatId = msg.chat.id;
   const userId = msg.from.id;
   const username = msg.from.username || 'No username';
@@ -59,7 +64,14 @@ bot.onText(/\/start/, (msg) => {
   console.log('========================');
   
   users.add(chatId);
-  bot.sendMessage(chatId, '🚀 Добро пожаловать в Hzlab бот!\n\nЯ уведомлю вас о запуске нашего сайта. Оставайтесь на связи!');
+  
+  try {
+    await bot.sendMessage(chatId, '🚀 Добро пожаловать в Hzlab бот!\n\nЯ уведомлю вас о запуске нашего сайта. Оставайтесь на связи!');
+    console.log(`✅ Welcome message sent to user ${userId}`);
+  } catch (error) {
+    console.error(`❌ Failed to send welcome message to user ${userId}:`, error.message);
+    // Don't remove user from storage, message sending can be retried later
+  }
 });
 
 // Enhanced admin command to send to all stored users
