@@ -25,7 +25,10 @@ if (WEBHOOK_URL) {
   console.log('Polling mode - bot is ready for local testing');
 }
 
-// Enhanced logging middleware
+// In-memory user storage (in production, use a database)
+const users = new Set();
+
+// Enhanced message logging
 bot.on('message', (msg) => {
   const chatId = msg.chat.id;
   const userId = msg.from.id;
@@ -51,9 +54,7 @@ bot.on('message', (msg) => {
   }
 });
 
-// Store user chat IDs when they start
-const users = new Set();
-
+// Enhanced start command with logging
 bot.onText(/\/start/, (msg) => {
   const chatId = msg.chat.id;
   const userId = msg.from.id;
@@ -73,7 +74,7 @@ bot.onText(/\/start/, (msg) => {
   bot.sendMessage(chatId, '🚀 Добро пожаловать в Hzlab бот!\n\nЯ уведомлю вас о запуске нашего сайта. Оставайтесь на связи!');
 });
 
-// API endpoints for web interface
+// Enhanced admin command to send to all stored users
 bot.onText(/\/admin_notify/, async (msg) => {
   const chatId = msg.chat.id;
   const userId = msg.from.id;
@@ -141,47 +142,29 @@ bot.onText(/\/admin_notify/, async (msg) => {
   }
 });
 
-// Web interface endpoints
+// Webhook handler - simplified
 module.exports = async (req, res) => {
   try {
-    // Full request logging
-    console.log('=== WEB REQUEST ===');
+    console.log('=== WEBHOOK REQUEST ===');
     console.log(`Timestamp: ${new Date().toISOString()}`);
     console.log(`Method: ${req.method}`);
     console.log(`URL: ${req.url}`);
-    console.log(`Pathname: ${req.url?.split('?')[0]}`);
-    console.log(`Headers:`, JSON.stringify(req.headers, null, 2));
-    console.log(`Body:`, JSON.stringify(req.body, null, 2));
     console.log('==================');
     
-    // Handle different endpoints based on URL path
-    const pathname = req.url?.split('?')[0] || '';
-    
-    if (req.method === 'POST' && pathname === '/api/broadcast') {
-      console.log('Handling broadcast request');
-      return handleBroadcast(req, res);
-    }
-    
-    if (req.method === 'GET' && pathname === '/api/stats') {
-      console.log('Handling stats request');
-      return handleStats(req, res);
-    }
-    
-    // For webhook mode, process the update directly
+    // Process Telegram webhook update
     if (WEBHOOK_URL) {
       console.log('Processing webhook update...');
-      bot.processUpdate(req.body);
+      await bot.processUpdate(req.body);
       console.log('Webhook update processed successfully');
     } else {
-      // For polling mode, this shouldn't be called
       console.log('ERROR: Webhook handler called in polling mode');
       throw new Error('Webhook handler called in polling mode');
     }
     
-    console.log('Request handled successfully');
+    console.log('Webhook request handled successfully');
     res.status(200).send('OK');
   } catch (error) {
-    console.error('=== WEB REQUEST ERROR ===');
+    console.error('=== WEBHOOK ERROR ===');
     console.error(`Timestamp: ${new Date().toISOString()}`);
     console.error(`Method: ${req.method}`);
     console.error(`URL: ${req.url}`);
@@ -189,117 +172,6 @@ module.exports = async (req, res) => {
     console.error(`Stack:`, error.stack);
     console.error('========================');
     
-    res.status(500).json({ 
-      error: error.message,
-      stack: error.stack,
-      timestamp: new Date().toISOString()
-    });
+    res.status(500).send('Error');
   }
 };
-
-async function handleBroadcast(req, res) {
-  try {
-    console.log('=== BROADCAST REQUEST ===');
-    console.log(`Timestamp: ${new Date().toISOString()}`);
-    console.log(`Request body:`, JSON.stringify(req.body, null, 2));
-    
-    const { message, withImage } = req.body;
-    const imagePath = path.join(__dirname, '..', 'img', 'hzlab.jpeg');
-    
-    console.log(`Message length: ${message ? message.length : 0}`);
-    console.log(`With image: ${withImage}`);
-    console.log(`Total users to broadcast: ${users.size}`);
-    console.log(`Image path: ${imagePath}`);
-    
-    let successCount = 0;
-    let failedUsers = [];
-    
-    console.log(`Starting web broadcast to ${users.size} users...`);
-    
-    for (const userId of users) {
-      try {
-        console.log(`Sending to user ${userId}...`);
-        
-        if (withImage) {
-          await bot.sendPhoto(userId, imagePath, {
-            caption: message,
-            parse_mode: 'HTML'
-          });
-          console.log(`✅ Photo sent to user ${userId}`);
-        } else {
-          await bot.sendMessage(userId, message);
-          console.log(`✅ Message sent to user ${userId}`);
-        }
-        successCount++;
-      } catch (error) {
-        console.error(`❌ Failed to send to user ${userId}:`, error.message);
-        console.error(`Error details:`, error);
-        failedUsers.push(userId);
-      }
-    }
-    
-    console.log('=== BROADCAST RESULTS ===');
-    console.log(`Total users: ${users.size}`);
-    console.log(`Successful: ${successCount}`);
-    console.log(`Failed: ${failedUsers.length}`);
-    if (failedUsers.length > 0) {
-      console.log(`Failed user IDs:`, failedUsers);
-    }
-    console.log('========================');
-    
-    const result = {
-      success: true,
-      successful: successCount,
-      failed: failedUsers.length,
-      total: users.size,
-      failedUsers: failedUsers
-    };
-    
-    console.log(`Sending response:`, JSON.stringify(result, null, 2));
-    res.json(result);
-    
-  } catch (error) {
-    console.error('=== BROADCAST ERROR ===');
-    console.error(`Timestamp: ${new Date().toISOString()}`);
-    console.error(`Error:`, error.message);
-    console.error(`Stack:`, error.stack);
-    console.error('====================');
-    
-    res.status(500).json({ 
-      error: error.message,
-      stack: error.stack,
-      timestamp: new Date().toISOString()
-    });
-  }
-}
-
-async function handleStats(req, res) {
-  try {
-    console.log('=== STATS REQUEST ===');
-    console.log(`Timestamp: ${new Date().toISOString()}`);
-    console.log(`Total users: ${users.size}`);
-    
-    const stats = {
-      totalUsers: users.size,
-      lastBroadcast: new Date().toLocaleString('ru-RU'),
-      users: Array.from(users)
-    };
-    
-    console.log(`Stats response:`, JSON.stringify(stats, null, 2));
-    console.log('==================');
-    
-    res.json(stats);
-  } catch (error) {
-    console.error('=== STATS ERROR ===');
-    console.error(`Timestamp: ${new Date().toISOString()}`);
-    console.error(`Error:`, error.message);
-    console.error(`Stack:`, error.stack);
-    console.error('==================');
-    
-    res.status(500).json({ 
-      error: error.message,
-      stack: error.stack,
-      timestamp: new Date().toISOString()
-    });
-  }
-}
